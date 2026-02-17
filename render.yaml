@@ -1,0 +1,22 @@
+services:
+  # Single Web Service - Serves both API and Frontend
+  - type: web
+    name: quickcommerce-app
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build:client
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false  # Optional: Set in Render dashboard if using MongoDB
+      - key: REDIS_URL
+        sync: false  # Optional: Set in Render dashboard if using Redis
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+
