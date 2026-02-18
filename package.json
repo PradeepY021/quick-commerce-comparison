@@ -9,7 +9,8 @@
     "build": "npm run build:client",
     "build:client": "cd client && npm run build",
     "install:all": "npm install && cd client && npm install",
-    "build:render": "PUPPETEER_SKIP_DOWNLOAD=true npm install --production=false && cd client && npm install && npm run build"
+    "build:render": "PUPPETEER_SKIP_DOWNLOAD=true npm install --production=false && cd client && npm install && npm run build && npx puppeteer browsers install chrome",
+    "postinstall": "node -e \"if(process.env.PUPPETEER_SKIP_DOWNLOAD !== 'true') require('puppeteer').executablePath()\" || true"
   },
   "keywords": [
     "quick-commerce",
