@@ -261,8 +261,9 @@ function Home() {
           
           const data = await response.json();
           
+          // Handle both real scraped data and mock data fallback
           if (response.ok && data.success && data.results && data.results.length > 0) {
-            // Convert scraped data to product format
+            // Convert scraped/mock data to product format
             const scrapedProducts = data.results.map((product, index) => ({
               id: product.id || `scraped-${searchTerm}-${index}`,
               name: product.name,
@@ -270,11 +271,14 @@ function Home() {
               brand: product.brand || 'Multiple Platforms',
               image: product.image || `https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&q=80`,
               prices: product.prices || [],
-              rating: 4.0 + (Math.random() * 0.5), // Random rating between 4.0-4.5
-              reviews: Math.floor(Math.random() * 200) + 50
+              rating: product.rating || (4.0 + (Math.random() * 0.5)), // Use product rating or random
+              reviews: product.reviews || Math.floor(Math.random() * 200) + 50
             }));
             
             allProducts.push(...scrapedProducts);
+          } else if (response.ok && !data.success && data.isMockData === false) {
+            // API returned an error but not mock data - log it
+            console.log(`No products for ${searchTerm}: ${data.error || 'Unknown error'}`);
           }
         } catch (err) {
           console.error(`Error fetching data for ${searchTerm}:`, err);
@@ -284,11 +288,11 @@ function Home() {
       
       if (allProducts.length > 0) {
         setProducts(allProducts);
-        console.log(`✅ Landing page loaded ${allProducts.length} real-time products`);
+        console.log(`✅ Landing page loaded ${allProducts.length} products`);
       } else {
-        // If no products found, show message but don't throw error
+        // If no products found, don't show error - just show empty state
         setProducts([]);
-        setError('No products found. Try searching for a specific product.');
+        setError(null); // Don't show error, let users search
       }
     } catch (err) {
       console.error('Error fetching real-time products:', err);
