@@ -193,23 +193,88 @@ app.post('/api/scrape/search', async (req, res) => {
         failedPlatforms: scrapingResult.failedPlatforms || []
       });
     } else {
-      // Return empty results instead of mock data
+      // Return mock data as fallback for demo purposes when scraping fails
       console.log(`⚠️  Scraping returned no products. Error: ${scrapingResult.error || 'No products found'}`);
+      console.log(`📦 Using mock data as fallback for demo`);
+      
+      // Filter mock products based on search query
+      const searchLower = searchQuery.trim().toLowerCase();
+      const filteredMockProducts = mockProducts
+        .filter(product => 
+          product.name.toLowerCase().includes(searchLower) ||
+          product.category.toLowerCase().includes(searchLower) ||
+          product.brand.toLowerCase().includes(searchLower)
+        )
+        .map(product => ({
+          id: product.id,
+          name: product.name,
+          category: product.category,
+          brand: product.brand,
+          image: product.image,
+          prices: product.prices,
+          rating: product.rating,
+          reviews: product.reviews
+        }));
+      
+      if (filteredMockProducts.length > 0) {
+        return res.json({
+          success: true,
+          results: filteredMockProducts,
+          platforms: ['zepto', 'swiggy', 'bigbasket'],
+          total: filteredMockProducts.length,
+          scrapedAt: new Date().toISOString(),
+          isRealData: false,
+          isMockData: true,
+          message: 'Showing demo data. Real scraping unavailable.'
+        });
+      }
+      
+      // If no mock data matches, return empty with helpful message
       return res.json({
         success: false,
         results: [],
         platforms: [],
         total: 0,
-        error: scrapingResult.error || 'No products found from any platform',
+        error: scrapingResult.error || 'No products found. Try searching for: milk, bread, eggs, rice, bananas',
         scrapedAt: new Date().toISOString(),
-        isRealData: true
+        isRealData: false
       });
     }
     
   } catch (error) {
     console.error('❌ Scraping endpoint error:', error);
     
-    // Return error instead of mock data
+    // Return mock data as fallback on error
+    const searchLower = (req.body.searchQuery || '').trim().toLowerCase();
+    const filteredMockProducts = mockProducts
+      .filter(product => 
+        product.name.toLowerCase().includes(searchLower) ||
+        product.category.toLowerCase().includes(searchLower)
+      )
+      .map(product => ({
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        brand: product.brand,
+        image: product.image,
+        prices: product.prices,
+        rating: product.rating,
+        reviews: product.reviews
+      }));
+    
+    if (filteredMockProducts.length > 0) {
+      return res.json({
+        success: true,
+        results: filteredMockProducts,
+        platforms: ['zepto', 'swiggy', 'bigbasket'],
+        total: filteredMockProducts.length,
+        scrapedAt: new Date().toISOString(),
+        isRealData: false,
+        isMockData: true,
+        message: 'Showing demo data due to error.'
+      });
+    }
+    
     return res.status(500).json({
       success: false,
       results: [],
@@ -217,7 +282,7 @@ app.post('/api/scrape/search', async (req, res) => {
       total: 0,
       error: error.message,
       scrapedAt: new Date().toISOString(),
-      isRealData: true
+      isRealData: false
     });
   }
 });
@@ -358,70 +423,6 @@ app.post('/api/comparison/compare', (req, res) => {
     results: comparisonResults,
     bestDeal: comparisonResults.length > 0 ? comparisonResults[0].bestDeal : null
   });
-});
-
-// Real-time scraping endpoint
-app.post('/api/scrape/search', async (req, res) => {
-  try {
-    const { searchQuery, location } = req.body;
-    
-    if (!searchQuery || searchQuery.trim().length === 0) {
-      return res.status(400).json({ 
-        error: 'Search query is required',
-        success: false 
-      });
-    }
-
-    console.log(`🕷️  Received scraping request for: ${searchQuery}`);
-    if (location) {
-      console.log(`📍 Location provided: ${location.city || 'Unknown'}, ${location.pincode || 'N/A'}`);
-    }
-    
-    // Try real scraping first with location
-    console.log(`⏳ Starting real scraping for: ${searchQuery}`);
-    const scrapingResult = await scraper.scrapeAllPlatforms(searchQuery.trim(), location);
-    
-    console.log(`📊 Scraping result: success=${scrapingResult.success}, products=${scrapingResult.products?.length || 0}, platforms=${scrapingResult.platforms?.length || 0}`);
-    
-    if (scrapingResult.success && scrapingResult.products && scrapingResult.products.length > 0) {
-      console.log(`✅ Scraping successful: ${scrapingResult.products.length} products found from ${scrapingResult.platforms?.length || 0} platforms`);
-      return res.json({
-        success: true,
-        results: scrapingResult.products,
-        platforms: scrapingResult.platforms || [],
-        total: scrapingResult.products.length,
-        scrapedAt: scrapingResult.scrapedAt,
-        isRealData: true,
-        failedPlatforms: scrapingResult.failedPlatforms || []
-      });
-    } else {
-      // Return empty results instead of mock data
-      console.log(`⚠️  Scraping returned no products. Error: ${scrapingResult.error || 'No products found'}`);
-      return res.json({
-        success: false,
-        results: [],
-        platforms: [],
-        total: 0,
-        error: scrapingResult.error || 'No products found from any platform',
-        scrapedAt: new Date().toISOString(),
-        isRealData: true
-      });
-    }
-    
-  } catch (error) {
-    console.error('❌ Scraping endpoint error:', error);
-    
-    // Return error instead of mock data
-    return res.status(500).json({
-      success: false,
-      results: [],
-      platforms: [],
-      total: 0,
-      error: error.message,
-      scrapedAt: new Date().toISOString(),
-      isRealData: true
-    });
-  }
 });
 
 // Individual platform scraping endpoints
