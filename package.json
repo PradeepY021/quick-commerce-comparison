@@ -8,7 +8,8 @@
     "dev": "nodemon server-simple.js",
     "build": "npm run build:client",
     "build:client": "cd client && npm run build",
-    "install:all": "npm install && cd client && npm install"
+    "install:all": "npm install && cd client && npm install",
+    "build:render": "npm install --production=false && cd client && npm install && npm run build"
   },
   "keywords": [
     "quick-commerce",
